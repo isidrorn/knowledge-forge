@@ -1,0 +1,101 @@
+spring:
+  config:
+    import: "optional:file:./application-local.yml"
+  datasource:
+    url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/aipipeline}
+    username: ${JDBC_DATABASE_USERNAME:postgres}
+    password: ${JDBC_DATABASE_PASSWORD:postgres}
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        id:
+          new_generator_mappings: true
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: ${OLLAMA_MODEL:qwen2.5-coder}
+          temperature: 0.1
+          num-ctx: 8192
+
+ai:
+  llm:
+    openrouter:
+      base-url: https://openrouter.ai/api/v1
+      api-key: ${OPENROUTER_API_KEY:}          # set in application-local.yml — blank = OpenRouterProvider disabled, Ollama only
+      model: ${OPENROUTER_MODEL:openrouter/free}
+      timeout-seconds: 60
+      request-delay-ms: ${OPENROUTER_REQUEST_DELAY_MS:3000}  # sequential requests — avoids rate limiting
+    ollama:
+      model: ${OLLAMA_MODEL:qwen2.5-coder}
+  task:
+    execution:
+      pool:
+        core-size: 1
+        max-size: 1
+        queue-capacity: 50
+      thread-name-prefix: "processing-"
+  error:
+    handling:
+      http-status-in-json-response: true
+      exception-logging: NO_LOGGING
+      full-stacktrace-http-statuses: 5xx
+      log-levels:
+        5xx: ERROR
+springdoc:
+  pathsToMatch: /
+
+processing:
+  max-content-chars: 40000
+  model-name: ${OLLAMA_MODEL:qwen2.5-coder}
+  timeout-seconds: 300
+  max-retries: 5
+  retry-max-attempts: 5
+  retry-initial-interval-ms: 5000
+  retry-multiplier: 2.0
+  retry-scheduler-cron: "0 */5 * * * *"
+
+ingestion:
+  email:
+    enabled: true
+    host: imap.gmail.com
+    port: 993
+    username: ${EMAIL_USER:}                  # set in application-local.yml
+    password: ${EMAIL_APP_PASSWORD:}          # set in application-local.yml
+    folder: INBOX
+    poll-interval-seconds: 300
+    mark-as-read: true
+    max-messages-per-poll: 20
+    allowed-sender: ${EMAIL_ALLOWED_SENDER:}  # set in application-local.yml
+
+kind: Application
+
+publisher:
+  output-dir: ${PUBLISHER_OUTPUT_DIR:./output}
+  max-attempts: 3
+  scheduler-cron: "0 */5 * * * *"
+  github:
+    enabled: ${GITHUB_ENABLED:true}
+    token: ${GITHUB_TOKEN:}                   # set in application-local.yml
+    owner: ${GITHUB_OWNER:isidrorn}
+    repo: ${GITHUB_REPO:MyLibrary}
+    branch: ${GITHUB_BRANCH:main}
+    path-prefix: ${GITHUB_PATH_PREFIX:articles}
+    committer-name: "AI Pipeline Bot"
+    committer-email: "bot@aipipeline.io"

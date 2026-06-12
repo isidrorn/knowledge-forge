@@ -1,0 +1,55 @@
+name: Sync to Public Repo
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout private repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Sanitize sensitive values in application.yml
+        run: |
+          FILE=src/main/resources/application.yml
+
+          # OpenRouter API key
+          sed -i 's|\(api-key:.*:\)sk-or-v1-[^}]*}|\1YOUR_OPENROUTER_API_KEY}|g' "$FILE"
+
+          # Gmail App Password
+          sed -i 's|\(password:.*:\)[a-z]\{4\} [a-z]\{4\} [a-z]\{4\} [a-z]\{4\}}|\1YOUR_GMAIL_APP_PASSWORD}|g' "$FILE"
+
+          # GitHub PAT (publisher token)
+          sed -i 's|\(token:.*:\)ghp_[^}]*}|\1YOUR_GITHUB_TOKEN}|g' "$FILE"
+
+          # Gmail account address used in defaults
+          sed -i 's|ai\.pipeline\.irn@gmail\.com|your-pipeline-email@gmail.com|g' "$FILE"
+
+          # Personal email used in allowed-sender default
+          sed -i 's|isidro\.rn@gmail\.com|your-email@gmail.com|g' "$FILE"
+
+          # OpenRouter key in test files
+          find src/test -name "*.java" -exec sed -i 's|sk-or-v1-[A-Za-z0-9]*|YOUR_OPENROUTER_API_KEY|g' {} +
+
+      - name: Push sanitized snapshot to public repo
+        env:
+          TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create a new orphan branch — no history, clean slate
+          git checkout --orphan public-sync
+
+          git add -A
+          git commit -m "chore: sync from private repo [skip ci]"
+
+          git remote add public https://isidrorn:${TOKEN}@github.com/isidrorn/knowledge-forge.git
+          git push public public-sync:main --force

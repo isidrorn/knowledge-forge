@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="aipipeline"/>
+
+    <property name="LOG_DIR"     value="C:\dev\logs"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- Consola -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- Fichero rotativo diario, retención 30 días, máx 500MB total -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${appName}.log</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${appName}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Reducir ruido de frameworks -->
+    <logger name="org.hibernate.SQL"                        level="WARN"/>
+    <logger name="org.hibernate.orm.jdbc.bind"              level="WARN"/>
+    <logger name="org.springframework.web"                  level="WARN"/>
+    <logger name="org.springframework.retry"                level="INFO"/>
+    <logger name="com.zaxxer.hikari"                        level="WARN"/>
+
+    <!-- Aplicación propia: DEBUG en desarrollo -->
+    <springProfile name="default,local">
+        <logger name="io.irn.aipipeline" level="DEBUG"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- Producción: INFO -->
+    <springProfile name="prod">
+        <logger name="io.irn.aipipeline" level="INFO"/>
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>

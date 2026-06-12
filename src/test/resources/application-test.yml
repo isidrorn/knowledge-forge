@@ -1,0 +1,42 @@
+ingestion:
+  email:
+    enabled: false
+    host: localhost
+    port: 3143
+    username: test@example.com
+    password: testpass
+    folder: INBOX
+    poll-interval-seconds: 3600
+    mark-as-read: false
+    max-messages-per-poll: 5
+    allowed-sender: test@example.com
+
+processing:
+  max-content-chars: 20000
+  model-name: test-model
+  timeout-seconds: 5
+  max-retries: 0
+  retry-max-attempts: 1
+  retry-initial-interval-ms: 100
+  retry-multiplier: 1.0
+  retry-scheduler-cron: "-"
+
+spring:
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        options:
+          model: test-model
+          temperature: 0.1
+          num-ctx: 8192
+  task:
+    scheduling:
+      enabled: false
+
+publisher:
+  output-dir: ./output-test
+  max-attempts: 3
+  scheduler-cron: "-"
+  github:
+    enabled: false

@@ -1,0 +1,17 @@
+# Copy this file to application-local.yml and fill in your values
+# application-local.yml is git-ignored and never committed
+
+ai:
+  llm:
+    openrouter:
+      api-key:           # OpenRouter API key — leave blank to use Ollama only
+
+ingestion:
+  email:
+    username:            # Gmail address used for IMAP ingestion
+    password:            # Gmail App Password (16-char, generated in Google Account settings)
+    allowed-sender:      # Only emails from this address will be ingested
+
+publisher:
+  github:
+    token:               # GitHub PAT with contents:write on the target repo
